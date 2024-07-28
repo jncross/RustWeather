@@ -2,6 +2,7 @@ use reqwest::Error;
 use serde::Deserialize;
 use std::io::{self};
 
+// Weather object with parameters matching individual response parameters
 #[derive(Deserialize, Debug)]
 struct Weather {
     temperature_2m: Option<Vec<f64>>,       // Option type to handle missing data
@@ -11,6 +12,7 @@ struct Weather {
     precipitation_probability: Option<Vec<f64>>,
 }
 
+// Parameters for the full response depending on call made
 #[derive(Deserialize, Debug)]
 struct WeatherResponse {
     hourly: Option<Weather>,
@@ -25,6 +27,7 @@ const CITIES: [(&str, f64, f64, &str); 4] = [
     ("Beijing, China", 39.9042, 116.4074, "Asia/Shanghai"),
 ];
 
+// Handles user input from the top level menu
 fn get_city_choice(input: &str) -> Result<(f64, f64, &str), &'static str> {
     let choice: usize = input.trim().parse().map_err(|_| "Invalid choice")?;
     if choice < 1 || choice > CITIES.len() {
@@ -37,10 +40,12 @@ fn get_city_choice(input: &str) -> Result<(f64, f64, &str), &'static str> {
 // Function to construct the API URL based on user choice (current weather or min/max temps)
 fn construct_url(latitude: f64, longitude: f64, timezone: &str, option: &str) -> String {
     match option {
+		//Current weather
         "1" => format!(
             "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&hourly=temperature_2m,precipitation_probability&timezone={}",
             latitude, longitude, timezone
         ),
+		// Weekly weather
         "2" => format!(
             "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&daily=temperature_2m_min,temperature_2m_max&timezone={}",
             latitude, longitude, timezone
@@ -70,6 +75,7 @@ async fn main() -> Result<(), Error> {
         println!("Enter latitude: ");
         let mut lat_input = String::new();
         io::stdin().read_line(&mut lat_input).unwrap();
+		// validate input
         let latitude: f64 = lat_input.trim().parse().map_err(|_| {
             eprintln!("Invalid latitude");
             std::process::exit(1);
@@ -86,6 +92,8 @@ async fn main() -> Result<(), Error> {
         println!("Enter timezone: ");
         let mut tz_input = String::new();
         io::stdin().read_line(&mut tz_input).unwrap();
+		//Timezone in the same IANA format as the const variables e.g. Australia/Melbourne, America/New_York
+		//This sanitizes the input to string
         let timezone: &str = Box::leak(tz_input.trim().to_string().into_boxed_str());
 
         (latitude, longitude, timezone)
@@ -127,6 +135,12 @@ async fn main() -> Result<(), Error> {
                 } else {
                     println!("No temperature data available.");
                 }
+                // Check if the precipitation_probability param in the response has values, and if so, prints the first.
+                if let Some(probability) = hourly.precipitation_probability.and_then(|v| v.first().cloned()) {
+                    println!("Chance of rain: {}%", probability);
+                } else {
+                    println!("No precipitation data available.");
+                }
             } else {
                 println!("No hourly data available.");
             }
@@ -136,6 +150,7 @@ async fn main() -> Result<(), Error> {
                 if let (Some(min_temps), Some(max_temps)) = (daily.temperature_2m_min, daily.temperature_2m_max) {
                     if let Some(dates) = daily.time {
                         println!("Minimum/Maximum temperatures for the next seven days:");
+						// Prints each date with min/max from the daily array that was received in the call. Open-meteo returns 7 days by default.
                         for ((min, max), date) in min_temps.iter().zip(&max_temps).zip(dates.iter()) {
                             println!("Date: {}, Min: {}°C, Max: {}°C", date, min, max);
                         }
@@ -150,13 +165,6 @@ async fn main() -> Result<(), Error> {
             }
         }
         _ => eprintln!("Invalid option"),
-    }
-
-    // Check if the precipitation_probability param in the response has values, and if so, prints the first.
-    if let Some(probability) = response.hourly.precipitation_probability.first() {
-        println!("Chance of rain: {}%", probability);
-    } else {
-        println!("No precipitation data available.");
     }
 
     Ok(())
