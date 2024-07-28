@@ -7,7 +7,8 @@ struct Weather {
     temperature_2m: Option<Vec<f64>>,       // Option type to handle missing data
     temperature_2m_min: Option<Vec<f64>>,   
     temperature_2m_max: Option<Vec<f64>>,   
-    time: Option<Vec<String>>,              
+    time: Option<Vec<String>>,    
+    precipitation_probability: Option<Vec<f64>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -32,11 +33,12 @@ fn get_city_choice(input: &str) -> Result<(f64, f64, &str), &'static str> {
     Ok((CITIES[choice - 1].1, CITIES[choice - 1].2, CITIES[choice - 1].3))  // Return coordinates and timezone of chosen city
 }
 
+
 // Function to construct the API URL based on user choice (current weather or min/max temps)
 fn construct_url(latitude: f64, longitude: f64, timezone: &str, option: &str) -> String {
     match option {
         "1" => format!(
-            "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&hourly=temperature_2m&timezone={}",
+            "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&hourly=temperature_2m,precipitation_probability&timezone={}",
             latitude, longitude, timezone
         ),
         "2" => format!(
@@ -148,6 +150,13 @@ async fn main() -> Result<(), Error> {
             }
         }
         _ => eprintln!("Invalid option"),
+    }
+
+    // Check if the precipitation_probability param in the response has values, and if so, prints the first.
+    if let Some(probability) = response.hourly.precipitation_probability.first() {
+        println!("Chance of rain: {}%", probability);
+    } else {
+        println!("No precipitation data available.");
     }
 
     Ok(())
