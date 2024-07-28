@@ -1,3 +1,6 @@
+RustWeather
+Basic test weather application in Rust that is designed to run via a Windows CLI. Connects to the Open-Meteo Free Weather API (https://open-meteo.com).
+
 Build Automation:
 Build is automated through GitHub Actions and the script is found in ./github/workflows/rust.yml
 The script automatically runs when changes are made to the main branch.
