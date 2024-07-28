@@ -206,5 +206,8 @@ async fn main() -> Result<(), Error> {
         _ => eprintln!("Invalid option"),
     }
 
+	println!("Press enter to exit:");
+    let mut option = String::new();
+    io::stdin().read_line(&mut option).unwrap();
     Ok(())
 }
