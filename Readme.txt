@@ -1,6 +1,7 @@
 Build Automation:
 Build is automated through GitHub Actions and the script is found in ./github/workflows/rust.yml
 The script automatically runs when changes are made to the main branch.
+The process can be viewed by navigating to the actions tab in github
 
 To build manually, you need to ensure rust is installed on your system.
 It can be installed via the rustup executable (or via curl) found here: https://www.rust-lang.org/tools/install
