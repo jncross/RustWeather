@@ -1,6 +1,6 @@
 use reqwest::Error;
 use serde::Deserialize;
-use std::io::{self, Write};
+use std::io::{self};
 
 #[derive(Deserialize, Debug)]
 struct Weather {
@@ -37,27 +37,49 @@ fn construct_url(latitude: f64, longitude: f64) -> String {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    println!("Select a city:");
     // Print each city from CITIES constant
-	for (i, city) in CITIES.iter().enumerate() {
+    for (i, city) in CITIES.iter().enumerate() {
         println!("{}. {}", i + 1, city.0);
     }
+    // Option for custom latitude and longitude input
+    println!("{}. Enter custom latitude and longitude", CITIES.len() + 1);
 
-    println!("Enter the number of your choicre: ");
+    println!("Enter the number of your choice: ");
     
 	// Instantiate input param
 	let mut choice = String::new();
 	// Get input and set to input param
     io::stdin().read_line(&mut choice).unwrap();
 
-	// Get chosen city with Ok and Err response from get_city_choice function
-    let (latitude, longitude) = match get_city_choice(&choice) {
-        // Setting Ok return param to new coords param
-		Ok(coords) => coords,
-        Err(e) => {
-            eprintln!("{}", e);
-			// Main is returned on error and thus program is exited.
-            return Ok(());
+    // Determine if user wants to enter custom latitude and longitude
+    let (latitude, longitude) = if choice.trim() == (CITIES.len() + 1).to_string() {
+        println!("Enter latitude: ");
+        let mut lat_input = String::new();
+        io::stdin().read_line(&mut lat_input).unwrap();
+        let latitude: f64 = lat_input.trim().parse().map_err(|_| {
+            eprintln!("Invalid latitude");
+            std::process::exit(1);
+        })?;
+
+        println!("Enter longitude: ");
+        let mut long_input = String::new();
+        io::stdin().read_line(&mut long_input).unwrap();
+        let longitude: f64 = long_input.trim().parse().map_err(|_| {
+            eprintln!("Invalid longitude");
+            std::process::exit(1);
+        })?;
+
+        (latitude, longitude)
+    } else {
+        // Get chosen city with Ok and Err response from get_city_choice function
+        match get_city_choice(&choice) {
+            // Setting Ok return param to new coords param
+            Ok(coords) => coords,
+            Err(e) => {
+                eprintln!("{}", e);
+                // Main is returned on error and thus program is exited.
+                return Ok(());
+            }
         }
     };
 
