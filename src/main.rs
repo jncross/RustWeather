@@ -5,6 +5,7 @@ use std::io::{self, Write};
 #[derive(Deserialize, Debug)]
 struct Weather {
     temperature_2m: Vec<f64>,
+    precipitation_probability: Vec<f64>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -30,7 +31,7 @@ fn get_city_choice(input: &str) -> Result<(f64, f64), &'static str> {
 
 fn construct_url(latitude: f64, longitude: f64) -> String {
     format!(
-        "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&hourly=temperature_2m",
+        "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&hourly=temperature_2m,precipitation_probability",
         latitude, longitude
     )
 }
@@ -72,6 +73,13 @@ async fn main() -> Result<(), Error> {
         println!("Current temperature: {}°C", temp);
     } else {
         println!("No temperature data available.");
+    }
+
+    // Check if the precipitation_probability param in the response has values, and if so, prints the first.
+    if let Some(probability) = response.hourly.precipitation_probability.first() {
+        println!("Chance of rain: {}%", probability);
+    } else {
+        println!("No precipitation data available.");
     }
 
     Ok(())
