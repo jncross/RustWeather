@@ -31,7 +31,8 @@ const CITIES: [(&str, f64, f64, &str); 4] = [
 fn get_city_choice(input: &str) -> Result<(f64, f64, &str), &'static str> {
     let choice: usize = input.trim().parse().map_err(|_| "Invalid choice")?;
     if choice < 1 || choice > CITIES.len() {
-        return Err("Choice out of range");
+		//Not returning error to force test fail.
+        //return Err("Choice out of range");
     }
     Ok((CITIES[choice - 1].1, CITIES[choice - 1].2, CITIES[choice - 1].3))  // Return coordinates and timezone of chosen city
 }
@@ -50,7 +51,45 @@ fn construct_url(latitude: f64, longitude: f64, timezone: &str, option: &str) ->
             "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&daily=temperature_2m_min,temperature_2m_max&timezone={}",
             latitude, longitude, timezone
         ),
+		"3" => format!( // Added option to fail test.
+            "asdfasdf"
+        ),
         _ => String::new(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_city_choice_valid() {
+        let result = get_city_choice("1").unwrap();
+        assert_eq!(result, (-34.9285, 138.6007, "Australia/Adelaide"));
+    }
+
+    #[test]
+    fn test_get_city_choice_invalid_choice() {
+        let result = get_city_choice("5");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_city_choice_invalid_input() {
+        let result = get_city_choice("abc");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_construct_url_current_weather() {
+        let url = construct_url(-34.9285, 138.6007, "Australia/Adelaide", "1");
+        assert_eq!(url, "https://api.open-meteo.com/v1/forecast?latitude=-34.9285&longitude=138.6007&hourly=temperature_2m,precipitation_probability&timezone=Australia/Adelaide");
+    }
+
+    #[test]
+    fn test_construct_url_invalid_option() {
+        let url = construct_url(-34.9285, 138.6007, "Australia/Adelaide", "3");
+        assert_eq!(url, "");
     }
 }
 
