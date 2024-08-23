@@ -31,8 +31,7 @@ const CITIES: [(&str, f64, f64, &str); 4] = [
 fn get_city_choice(input: &str) -> Result<(f64, f64, &str), &'static str> {
     let choice: usize = input.trim().parse().map_err(|_| "Invalid choice")?;
     if choice < 1 || choice > CITIES.len() {
-		//Not returning error to force test fail.
-        //return Err("Choice out of range");
+        return Err("Choice out of range");
     }
     Ok((CITIES[choice - 1].1, CITIES[choice - 1].2, CITIES[choice - 1].3))  // Return coordinates and timezone of chosen city
 }
@@ -50,9 +49,6 @@ fn construct_url(latitude: f64, longitude: f64, timezone: &str, option: &str) ->
         "2" => format!(
             "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&daily=temperature_2m_min,temperature_2m_max&timezone={}",
             latitude, longitude, timezone
-        ),
-		"3" => format!( // Added option to fail test.
-            "asdfasdf"
         ),
         _ => String::new(),
     }
